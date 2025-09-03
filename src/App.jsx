@@ -4,26 +4,37 @@ import MainContent from './components/MainContent';
 import CalendarView from './components/CalendarView';
 
 function App() {
-  const [tasks, setTasks] = useState([]);
+  // Initialize tasks state with localStorage data or empty array
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem('tasks');
+    try {
+      return savedTasks ? JSON.parse(savedTasks) : [];
+    } catch (error) {
+      console.error('Failed to parse saved tasks:', error);
+      return []; // Fallback to empty array if parsing fails
+    }
+  });
+
   const [selectedView, setSelectedView] = useState('Today');
   const [lists, setLists] = useState([{ name: 'Personal', color: 'pink-500' }, { name: 'Work', color: 'cyan-500' }, { name: 'List 1', color: 'yellow-500' }]);
   const [tags, setTags] = useState(['Tag 1', 'Tag 2']);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Save tasks to localStorage whenever tasks change
   useEffect(() => {
-    const storedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
-    setTasks(storedTasks);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
+    try {
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    } catch (error) {
+      console.error('Failed to save tasks to localStorage:', error);
+    }
   }, [tasks]);
 
+  // Filter tasks based on selected view and search term
   const filteredTasks = tasks.filter(task => {
-    const matchesView = selectedView === 'Today' 
+    const matchesView = selectedView === 'Today'
       ? task.date === new Date().toISOString().split('T')[0]
       : true;
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (task.subtasks && task.subtasks.some(sub => sub.toLowerCase().includes(searchTerm.toLowerCase())));
     return matchesView && matchesSearch;
   });
